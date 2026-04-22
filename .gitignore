@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML artifacts
+mlruns/
+/models/
+*.h5
+*.keras
+*.onnx
+*.pkl
+*.joblib
+
+# Data
+data/raw/*.csv
+data/processed/*.csv
+data/processed/*.pkl
+data/external/
+
+# Logs
+logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker/*.log
+
+# Great Expectations
+great_expectations/uncommitted/
+
+# Coverage
+.coverage
+htmlcov/

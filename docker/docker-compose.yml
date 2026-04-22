@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: quality-predictor-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=mlruns
+      - MODEL_PATH=models/final
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+    volumes:
+      - ../models:/app/models
+      - ../mlruns:/app/mlruns
+      - ../logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: quality-predictor-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../mlruns:/mlruns
+    command: >
+      bash -c "pip install mlflow==2.21.0 &&
+      mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlruns/mlflow.db --default-artifact-root /mlruns"
+    restart: unless-stopped

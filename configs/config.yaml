@@ -1,0 +1,80 @@
+# Manufacturing Quality Score Prediction - Configuration
+
+data:
+  raw_path: "data/raw/manufacturing_data.csv"
+  processed_dir: "data/processed"
+  train_path: "data/processed/train.csv"
+  test_path: "data/processed/test.csv"
+  scaler_path: "data/processed/scaler.pkl"
+  num_samples: 10000
+  test_size: 0.2
+  random_seed: 42
+  features:
+    - temperature
+    - pressure
+    - vibration
+    - humidity
+    - speed
+    - thickness
+    - power_consumption
+    - tool_wear
+    - coolant_flow
+    - ambient_temp
+    - cycle_time
+    - material_hardness
+    - spindle_load
+    - feed_rate
+    - surface_roughness
+  target: quality_score
+
+model:
+  architecture:
+    input_dim: 15
+    hidden_layers: [128, 64, 32]
+    dropout_rate: 0.3
+    activation: "relu"
+    output_activation: "sigmoid"
+  hyperparameters:
+    learning_rate: 0.001
+    batch_size: 64
+    epochs: 100
+    optimizer: "adam"
+    loss: "mse"
+    metrics: ["mae", "mse"]
+  callbacks:
+    early_stopping:
+      patience: 10
+      monitor: "val_loss"
+      restore_best_weights: true
+    reduce_lr:
+      factor: 0.5
+      patience: 5
+      min_lr: 0.00001
+
+training:
+  validation_split: 0.2
+  shuffle: true
+  verbose: 1
+  random_seed: 42
+  checkpoint_dir: "models/checkpoints"
+  export_path: "models/final"
+  onnx_path: "models/final/model.onnx"
+
+mlflow:
+  experiment_name: "manufacturing-quality-prediction"
+  tracking_uri: "mlruns"
+  log_models: true
+  log_datasets: true
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+  model_path: "models/final"
+  quality_threshold: 70.0
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/app.log"
