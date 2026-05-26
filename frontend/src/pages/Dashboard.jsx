@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   const total = history.length;
   const avgScore = total ? history.reduce((s, h) => s + h.quality_score, 0) / total : 0;
-  const defects = total ? history.filter((h) => h.quality_score < 50).length : 0;
+  const defects = total ? history.filter((h) => h.status === 'fail').length : 0;
   const defectRate = total ? ((defects / total) * 100).toFixed(1) : '0.0';
 
   const gaugeData = [{ name: 'Quality', value: avgScore, fill: avgScore > 75 ? '#16a34a' : avgScore >= 50 ? '#d97706' : '#dc2626' }];
@@ -28,7 +28,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KpiCard title="Avg Quality Score" value={avgScore.toFixed(1)} subtitle="Across all predictions" />
         <KpiCard title="Total Predictions" value={total} subtitle="Lifetime count" />
-        <KpiCard title="Defect Rate" value={`${defectRate}%`} subtitle="Score below 50" />
+        <KpiCard title="Defect Rate" value={`${defectRate}%`} subtitle="Status: fail" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

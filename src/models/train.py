@@ -9,6 +9,7 @@ from pathlib import Path
 
 import mlflow
 import mlflow.keras
+import tensorflow as tf
 import yaml
 
 from src.data.preprocess import preprocess_pipeline
@@ -40,6 +41,9 @@ def train(config_path: str = "configs/config.yaml") -> None:
         config_path: Path to the YAML configuration file.
     """
     config = load_config(config_path)
+
+    seed = config["data"]["random_seed"]
+    tf.random.set_seed(seed)
 
     # Prepare data
     X_train, X_test, y_train, y_test = preprocess_pipeline(

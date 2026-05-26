@@ -14,6 +14,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+from src.data.validate import validate_data
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,6 +110,7 @@ def preprocess_pipeline(
         Tuple of (X_train, X_test, y_train, y_test) as numpy arrays.
     """
     df = load_raw_data(raw_path)
+    validate_data(df)
     X, y = split_features_target(df, target_col)
 
     X_train, X_test, y_train, y_test = train_test_split(

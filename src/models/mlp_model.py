@@ -114,4 +114,17 @@ def get_callbacks(config: Dict) -> list:
             )
         )
 
+    if "model_checkpoint" in cb_config:
+        mc = cb_config["model_checkpoint"]
+        import os
+        os.makedirs(os.path.dirname(mc["filepath"]), exist_ok=True)
+        callbacks.append(
+            keras.callbacks.ModelCheckpoint(
+                filepath=mc["filepath"],
+                monitor=mc["monitor"],
+                save_best_only=mc["save_best_only"],
+                save_weights_only=mc.get("save_weights_only", False),
+            )
+        )
+
     return callbacks

@@ -50,6 +50,11 @@ model:
       factor: 0.5
       patience: 5
       min_lr: 0.00001
+    model_checkpoint:
+      filepath: "models/checkpoints/best_model.keras"
+      monitor: "val_loss"
+      save_best_only: true
+      save_weights_only: false
 
 training:
   validation_split: 0.2

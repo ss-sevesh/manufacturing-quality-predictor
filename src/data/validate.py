@@ -1,7 +1,8 @@
-"""Data validation using Great Expectations.
+"""Data validation for manufacturing datasets.
 
-Defines and runs expectation suites to ensure data quality
-before model training.
+Defines and runs schema, null, and range checks to ensure data
+quality before model training. Checks are implemented with pandas
+without requiring the Great Expectations runtime.
 """
 
 import logging

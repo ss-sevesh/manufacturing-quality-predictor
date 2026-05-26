@@ -27,7 +27,8 @@ export default function Monitoring() {
     return () => clearInterval(interval);
   }, [history]);
 
-  const alerts = history.filter((h) => h.quality_score < 60).slice(0, 10);
+  const QUALITY_THRESHOLD = 70;
+  const alerts = history.filter((h) => h.status === 'fail').slice(0, 10);
 
   return (
     <div className="space-y-8">
@@ -76,7 +77,7 @@ export default function Monitoring() {
               {/* Threshold line */}
               <Line
                 type="monotone"
-                dataKey={() => 60}
+                dataKey={() => QUALITY_THRESHOLD}
                 stroke="#dc2626"
                 strokeWidth={1}
                 strokeDasharray="5 5"
