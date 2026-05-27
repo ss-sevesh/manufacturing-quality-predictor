@@ -5,6 +5,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import json
 import numpy as np
 import yaml
 from fastapi import FastAPI, HTTPException
@@ -91,6 +92,17 @@ async def model_info() -> ModelInfoResponse:
         architecture=str(_config["model"]["architecture"]["hidden_layers"]),
         version="0.1.0",
     )
+
+
+@app.get("/metrics")
+async def get_metrics() -> dict:
+    """Return saved training metrics (MAE, RMSE, R², loss history, scatter sample)."""
+    model_path = os.getenv("MODEL_PATH", _config["training"]["export_path"] if _config else "models/final")
+    metrics_path = Path(model_path) / "metrics.json"
+    if not metrics_path.exists():
+        raise HTTPException(status_code=404, detail="No metrics found. Train a model first.")
+    with open(metrics_path) as f:
+        return json.load(f)
 
 
 @app.post("/predict", response_model=PredictionResponse)

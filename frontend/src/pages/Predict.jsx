@@ -4,7 +4,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { usePredict } from '../hooks/usePredictions';
 import { getScoreClasses, getScoreBorder } from '../utils/helpers';
-import { Send } from 'lucide-react';
+import { Send, Shuffle } from 'lucide-react';
 
 const schema = z.object({
   temperature: z.coerce.number().min(100).max(300),
@@ -23,6 +23,33 @@ const schema = z.object({
   feed_rate: z.coerce.number().min(0.05).max(0.5),
   surface_roughness: z.coerce.number().min(0).max(20),
 });
+
+const fieldRanges = {
+  temperature:       { min: 100,  max: 300,  decimals: 1 },
+  pressure:          { min: 20,   max: 80,   decimals: 1 },
+  humidity:          { min: 10,   max: 100,  decimals: 1 },
+  speed:             { min: 500,  max: 2000, decimals: 0 },
+  vibration:         { min: 0,    max: 1,    decimals: 3 },
+  thickness:         { min: 0.5,  max: 5,    decimals: 2 },
+  power_consumption: { min: 200,  max: 500,  decimals: 1 },
+  tool_wear:         { min: 0,    max: 1,    decimals: 3 },
+  coolant_flow:      { min: 0,    max: 20,   decimals: 2 },
+  ambient_temp:      { min: 10,   max: 45,   decimals: 1 },
+  cycle_time:        { min: 20,   max: 80,   decimals: 1 },
+  material_hardness: { min: 30,   max: 80,   decimals: 1 },
+  spindle_load:      { min: 20,   max: 100,  decimals: 1 },
+  feed_rate:         { min: 0.05, max: 0.5,  decimals: 3 },
+  surface_roughness: { min: 0,    max: 20,   decimals: 2 },
+};
+
+function randomValues() {
+  return Object.fromEntries(
+    Object.entries(fieldRanges).map(([key, { min, max, decimals }]) => {
+      const val = min + Math.random() * (max - min);
+      return [key, +val.toFixed(decimals)];
+    })
+  );
+}
 
 const fields = [
   { name: 'temperature', label: 'Temperature (C)', placeholder: '185' },
@@ -43,7 +70,7 @@ const fields = [
 ];
 
 export default function Predict() {
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
   const mutation = usePredict();
 
   const onSubmit = (data) => {
@@ -79,7 +106,7 @@ export default function Predict() {
           </div>
         ))}
 
-        <div className="md:col-span-2 lg:col-span-3 pt-2">
+        <div className="md:col-span-2 lg:col-span-3 pt-2 flex gap-3">
           <button
             type="submit"
             disabled={mutation.isPending}
@@ -87,6 +114,14 @@ export default function Predict() {
           >
             <Send size={16} />
             {mutation.isPending ? 'Predicting...' : 'Predict Quality'}
+          </button>
+          <button
+            type="button"
+            onClick={() => reset(randomValues())}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-6 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Shuffle size={16} />
+            Fill Random
           </button>
         </div>
       </form>

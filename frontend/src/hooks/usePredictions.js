@@ -46,3 +46,12 @@ export function useHistory() {
     queryFn: () => loadHistory(),
   });
 }
+
+export function useMetrics() {
+  return useQuery({
+    queryKey: ['metrics'],
+    queryFn: () => client.get('/metrics').then((r) => r.data),
+    retry: 1,
+    staleTime: Infinity,
+  });
+}
