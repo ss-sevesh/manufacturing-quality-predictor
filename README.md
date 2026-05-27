@@ -25,7 +25,7 @@ Sensor Data (15 features)
  FastAPI  /predict        ← JSON request → {score, confidence, status}
         │
         ▼
- React Dashboard          ← live gauges, history, SHAP, monitoring
+ React Dashboard          ← live gauges, history, performance metrics
 ```
 
 The quality score is a nonlinear function of temperature, pressure, vibration, tool wear, coolant flow, humidity, speed, surface roughness, material hardness, and cycle time — with Gaussian noise to simulate measurement variability. Five additional features (thickness, power consumption, ambient temperature, spindle load, feed rate) are included as realistic process parameters that the model must learn to de-weight.
@@ -214,6 +214,22 @@ curl -X POST http://localhost:8000/predict \
 { "status": "healthy", "model_loaded": true }
 ```
 
+### `GET /metrics`
+
+Returns saved training metrics including MAE, RMSE, R², MAPE, loss history, and a scatter sample of actual vs predicted values.
+
+```json
+{
+  "mae": 1.804,
+  "rmse": 2.259,
+  "r2": 0.4835,
+  "mape": 2.35,
+  "training_epochs": 45,
+  "train_samples": 8000,
+  "test_samples": 2000
+}
+```
+
 ### `GET /model/info`
 
 ```json
@@ -281,7 +297,7 @@ api:
 pytest tests/ -v
 ```
 
-Tests cover data generation, validation, preprocessing, MLP construction, metric correctness, and API endpoint contracts. Target: ≥ 80% coverage.
+Test files are scaffolded in `tests/` (test_data.py, test_model.py, test_api.py). Target: ≥ 80% coverage.
 
 ---
 
