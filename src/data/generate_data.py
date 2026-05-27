@@ -64,6 +64,18 @@ def generate_manufacturing_data(num_samples: int = 10000, seed: int = 42) -> pd.
 
     df = pd.DataFrame(data)
 
+    # Clip features to their physical bounds (normal distribution tails can exceed them)
+    bounds = {
+        "humidity": (10, 100),
+        "spindle_load": (20, 100),
+        "feed_rate": (0.05, 0.5),
+        "vibration": (0, 1.0),
+        "tool_wear": (0, 1.0),
+        "surface_roughness": (0, 20),
+    }
+    for col, (lo, hi) in bounds.items():
+        df[col] = df[col].clip(lo, hi)
+
     # Quality score as nonlinear function of features
     quality = (
         50
