@@ -1,6 +1,6 @@
 # Manufacturing Quality Score Predictor
 
-An end-to-end machine learning system that predicts quality scores (0–100) for manufactured parts from 15 real-time process sensor readings. A Multi-Layer Perceptron (MLP) trained with TensorFlow/Keras powers the predictions; a FastAPI backend serves them; a React dashboard visualises them.
+An end-to-end ML system that predicts quality scores (0–100) for manufactured parts from 15 real-time process sensor readings. A Multi-Layer Perceptron (MLP) trained with TensorFlow/Keras powers the predictions; a FastAPI backend serves them; a React dashboard visualises them.
 
 ---
 
@@ -28,8 +28,6 @@ Sensor Data (15 features)
  React Dashboard          ← live gauges, history, performance metrics
 ```
 
-The quality score is a nonlinear function of temperature, pressure, vibration, tool wear, coolant flow, humidity, speed, surface roughness, material hardness, and cycle time — with Gaussian noise to simulate measurement variability. Five additional features (thickness, power consumption, ambient temperature, spindle load, feed rate) are included as realistic process parameters that the model must learn to de-weight.
-
 ---
 
 ## Tech Stack
@@ -40,7 +38,7 @@ The quality score is a nonlinear function of temperature, pressure, vibration, t
 | Preprocessing | scikit-learn | 1.6.1 |
 | Data Manipulation | pandas + numpy | 2.1.4 / 1.26.4 |
 | Experiment Tracking | MLflow | 2.21.0 |
-| Explainability | SHAP | 0.46.0 |
+| Visualization | Matplotlib + Seaborn | 3.10.1 / 0.13.2 |
 | API Server | FastAPI + Uvicorn | 0.115.12 / 0.34.0 |
 | Frontend | React + Vite + Tailwind | 19 / 8 / 4 |
 | Testing | pytest + httpx | 8.3.5 / 0.28.1 |
@@ -61,7 +59,7 @@ manufacturing-quality-predictor/
 │   ├── models/
 │   │   ├── mlp_model.py         # Keras MLP builder + callbacks
 │   │   ├── train.py             # training loop + MLflow tracking
-│   │   └── evaluate.py          # metrics (MAE, RMSE, R², MAPE) + SHAP
+│   │   └── evaluate.py          # metrics (MAE, RMSE, R², MAPE)
 │   ├── visualization/
 │   │   └── plots.py             # distribution, correlation, residual plots
 │   └── api/
@@ -76,10 +74,10 @@ manufacturing-quality-predictor/
 ├── configs/
 │   └── config.yaml              # all hyperparameters and paths
 ├── data/
-│   ├── raw/                     # generated CSV
-│   └── processed/               # scaled splits + scaler.pkl
+│   ├── raw/                     # generated CSV (created at runtime)
+│   └── processed/               # scaled splits + scaler.pkl (created at runtime)
 ├── models/
-│   ├── final/                   # model.keras (production)
+│   ├── final/                   # model.keras (created after training)
 │   └── checkpoints/             # best_model.keras (best val_loss)
 ├── notebooks/
 │   └── 01_eda.ipynb             # exploratory data analysis
@@ -89,11 +87,7 @@ manufacturing-quality-predictor/
 │   └── test_api.py              # FastAPI endpoint tests
 ├── docker/
 │   ├── Dockerfile
-│   └── docker-compose.yml       # API + MLflow server
-├── docs/
-│   └── architecture.md          # detailed component architecture
-├── mlruns/                      # MLflow experiment artifacts
-├── logs/                        # application logs
+│   └── docker-compose.yml
 ├── requirements.txt
 └── .env.example
 ```
@@ -136,11 +130,11 @@ python -m src.data.generate_data
 ```bash
 python -m src.models.train
 # → models/final/model.keras
+# → models/final/metrics.json
 # → models/checkpoints/best_model.keras
-# → mlruns/  (MLflow artifacts)
 ```
 
-Training is fully config-driven (`configs/config.yaml`). Every run is logged to MLflow — launch the UI to inspect:
+All hyperparameters are controlled by `configs/config.yaml` (hidden layers, dropout, learning rate, batch size, epochs). Every run is logged to MLflow:
 
 ```bash
 mlflow ui --backend-store-uri mlruns
@@ -169,8 +163,6 @@ npm run dev
 ## API Reference
 
 ### `POST /predict`
-
-Send 15 sensor readings, receive a predicted quality score.
 
 **Request**
 
@@ -216,19 +208,7 @@ curl -X POST http://localhost:8000/predict \
 
 ### `GET /metrics`
 
-Returns saved training metrics including MAE, RMSE, R², MAPE, loss history, and a scatter sample of actual vs predicted values.
-
-```json
-{
-  "mae": 1.804,
-  "rmse": 2.259,
-  "r2": 0.4835,
-  "mape": 2.35,
-  "training_epochs": 45,
-  "train_samples": 8000,
-  "test_samples": 2000
-}
-```
+Returns training metrics: MAE, RMSE, R², MAPE, loss history, and actual vs predicted scatter sample.
 
 ### `GET /model/info`
 
@@ -265,28 +245,32 @@ Returns saved training metrics including MAE, RMSE, R², MAPE, loss history, and
 
 ---
 
-## Configuration
+## Hyperparameters
 
-All hyperparameters, paths, and runtime options live in `configs/config.yaml`. Key sections:
+All hyperparameters live in `configs/config.yaml` — no hardcoded values anywhere:
 
 ```yaml
-data:
-  num_samples: 10000
-  test_size: 0.2
-  random_seed: 42
-
 model:
   architecture:
-    hidden_layers: [128, 64, 32]
-    dropout_rate: 0.3
-    output_activation: sigmoid
+    hidden_layers: [128, 64, 32]   # MLP layer sizes
+    dropout_rate: 0.3               # regularisation
+    activation: relu
+    output_activation: sigmoid      # maps output to [0, 1]
   hyperparameters:
     learning_rate: 0.001
     batch_size: 64
     epochs: 100
+    optimizer: adam
+    loss: mse
+  callbacks:
+    early_stopping:
+      patience: 10                  # stops if val_loss stalls
+    reduce_lr:
+      factor: 0.5                   # halves LR on plateau
+      patience: 5
 
 api:
-  quality_threshold: 70.0   # score below this → status: fail
+  quality_threshold: 70.0           # score below this → status: fail
 ```
 
 ---
@@ -297,7 +281,7 @@ api:
 pytest tests/ -v
 ```
 
-Test files are scaffolded in `tests/` (test_data.py, test_model.py, test_api.py). Target: ≥ 80% coverage.
+Covers data generation, validation, MLP architecture, metric correctness, and API endpoint contracts.
 
 ---
 
@@ -308,34 +292,18 @@ cd docker
 docker-compose up --build
 ```
 
-Starts two services:
-
 | Service | Port | Description |
 |---|---|---|
 | `quality-predictor-api` | 8000 | FastAPI prediction server |
 | `quality-predictor-mlflow` | 5000 | MLflow tracking UI |
 
-The API container expects a trained model to exist at `models/final/model.keras`. Run training locally first and the `models/` volume is mounted into the container.
-
----
-
-## Dashboard Pages
-
-| Page | Description |
-|---|---|
-| **Dashboard** | Average quality score gauge, total predictions, defect rate (API `status: fail`) |
-| **Predict** | Form with all 15 sensor inputs; live score result with confidence |
-| **History** | Paginated log of all predictions, score-range filter, CSV export |
-| **Performance** | Model metrics (RMSE, MAE, R²), actual vs predicted scatter, SHAP bar chart, training loss curve |
-| **Monitoring** | Live quality trend line updated every 5 s, alert panel for below-threshold predictions |
-
-Prediction history is persisted in browser `localStorage` so it survives page refreshes.
+Train the model locally first — `models/` is mounted as a volume.
 
 ---
 
 ## MLflow Experiment Tracking
 
-Every training run automatically logs:
+Every training run logs:
 
 - **Parameters**: hidden layers, dropout, learning rate, batch size, epochs, sample counts
 - **Metrics per epoch**: `train_loss`, `val_loss`

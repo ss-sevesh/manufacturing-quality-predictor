@@ -63,7 +63,6 @@ training:
   random_seed: 42
   checkpoint_dir: "models/checkpoints"
   export_path: "models/final"
-  onnx_path: "models/final/model.onnx"
 
 mlflow:
   experiment_name: "manufacturing-quality-prediction"

@@ -51,9 +51,9 @@ Thumbs.db
 # Docker
 docker/*.log
 
-# Great Expectations
-great_expectations/uncommitted/
-
 # Coverage
 .coverage
 htmlcov/
+
+# pytest cache
+.pytest_cache/
